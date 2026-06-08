@@ -158,4 +158,18 @@ def update_book(book_id:int, update:BookUpdate) :
 
     return books_db[book_id]
 
-# 도서삭제
+# 도서삭제 (DELETE /books/{book_id})
+@app.delete("/books/{book_id}", status_code=204, tags=["도서"])
+def delete_book(book_id:int) :
+    """
+    {book_id}번 도서를 삭제 합니다
+    status_code = 204 . 삭제 성공
+    """
+    if book_id not in books_db :
+        raise HTTPException(
+            status_code=404,    # not found
+            detail=f"도서 {book_id}번을 찾을 수 없습니다"
+        )
+    
+    del books_db[book_id]
+    # status_code=204 -> 응답 본문이 없어도 됨. => return 생략 가능
