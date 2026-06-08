@@ -54,3 +54,17 @@ class BookCreate(BaseModel) :
             }
         }
     }
+
+
+#-------------------------------------------------
+# 도서 응답 스키마 - 도서 검색, 수정의 결과 용 스키마
+#-------------------------------------------------
+class BookResponse(BaseModel) :
+    """
+    도서 응답 스키마
+    """
+    id:int
+    title:str
+    author:str
+    price:int
+    category:str
