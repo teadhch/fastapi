@@ -99,7 +99,7 @@ def create_book(book:BookCreate) :
 
 @app.get("/books", response_model=List[BookResponse], tags=["도서"]) 
 def get_books(
-    # Query Parameter : URL enldp ?로 붙이는 쿼리스트링(선택적 옵션)
+    # Query Parameter : URL 뒤에 ?로 붙이는 쿼리스트링(선택적 옵션)
     category: Optional[str] = Query(
         None,
         description="카테고리 필터(예 : ?category=프로그래밍)"
@@ -112,9 +112,10 @@ def get_books(
 
     """
     items = list(books_db.values())
-
     if category :
         items = [book for book in items if book["category"] == category]
+    if author :
+        items = [item for item in items if item["author"] == author]    
     return items
 
 # 개별도서 검색 (GET/books/{book_id}) - books_id : unique한 도서의 번호

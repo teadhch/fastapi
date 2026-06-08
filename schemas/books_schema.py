@@ -6,8 +6,7 @@ from typing import List, Optional
 class BookCreate(BaseModel) :
     """
     도서 등록 요청 스키마입니다.
-    이 클래스는 POST /books 요청에서 클라이언트가 보내야 할
-    JSON 데이터의 구조를 정의합니다.
+    이 클래스는 POST /books 요청에서 클라이언트가(사용자가 사용하는 프로그램) fastapi에게 보내야 할 JSON 데이터의 구조를 정의합니다.
 
     예:
     {
