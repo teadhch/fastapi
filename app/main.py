@@ -22,7 +22,7 @@
 # - URL 뒤에 ?key=value 형태로 붙는 값을 검증할 때 사용합니다.
 # - 예: /books?category=프로그래밍 에서 category는 Query Parameter입니다.
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Path
 from pydantic import BaseModel, Field   # 요청 데이터와 응답 데이터의 구조를 정의 할때 사용
 
 # List:
@@ -116,6 +116,25 @@ def get_books(
     if category :
         items = [book for book in items if book["category"] == category]
     return items
+
+# 개별도서 검색 (GET/books/{book_id}) - books_id : unique한 도서의 번호
+# (id로 하면되지 않을가) 사용자는 제목으로 보통 한다.
+@app.get("/books/{book_id}", response_model=BookResponse, tags=["도서"])
+def get_book(
+    # Path Parameter : URL 경로에 포함된 값을 얻어올 때 사용
+    book_id:int = Path(
+        ..., ge=1, description="도서 ID로 도서 검색(ID는 1이상)"
+    )
+) :
+    """
+        도서 ID로 도서 한건 조회
+    """
+    if book_id not in books_db :
+        raise HTTPException(
+            status_code=404,    # not found
+            detail=f"도서 {book_id}번을 찾을 수 없습니다"
+        )
+    return books_db[book_id]
 
 # 도서수정
 
