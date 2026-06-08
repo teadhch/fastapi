@@ -33,7 +33,7 @@ from pydantic import BaseModel, Field   # 요청 데이터와 응답 데이터�
 # - 값이 있을 수도 있고 없을 수도 있음을 의미합니다.
 # - 예: Optional[str]은 문자열이거나 None일 수 있습니다.
 from typing import List, Optional   # 데이터를 여러개 담을수 있는 컬렉션 객체
-from schemas.books_schema import BookCreate, BookResponse
+from schemas.books_schema import BookCreate, BookResponse, BookUpdate
 
 # FastAPI 객체 생성
 app = FastAPI(
@@ -136,6 +136,26 @@ def get_book(
         )
     return books_db[book_id]
 
-# 도서수정
+# 도서수정 (PUT /books/{book_id})
+@app.put("/books/{book_id}", response_model=BookResponse, tags=["도서"])
+def update_book(book_id:int, update:BookUpdate) :
+    """
+    도서 정보를 수정합니다.
+    변경할 필드만 보내도 됩니다. (나머지는 원래 값 유지됨)
+    예 : {"price" : 200000}
+    """
+    if book_id not in books_db :
+        raise HTTPException(
+            status_code=404,    # not found
+            detail=f"도서 {book_id}번을 찾을 수 없습니다"
+        )
+    # exclude_none = True "None"인 필드 제외
+    changes = update.model_dump(exclude_none=True) # model_dump -> pydantic에서 사용하는 객체를 dict으로 변환후 펼침 unpack
+
+    # 딕셔너리의 모든 키를 순회하며 값을 변경
+    for k, v in changes.items() :
+        books_db[book_id][k] = v    # book_id번 책의 k필드의 값을 v로 변경
+
+    return books_db[book_id]
 
 # 도서삭제
