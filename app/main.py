@@ -33,7 +33,7 @@ from pydantic import BaseModel, Field   # 요청 데이터와 응답 데이터�
 # - 값이 있을 수도 있고 없을 수도 있음을 의미합니다.
 # - 예: Optional[str]은 문자열이거나 None일 수 있습니다.
 from typing import List, Optional   # 데이터를 여러개 담을수 있는 컬렉션 객체
-from schemas.books_schema import BookCreate
+from schemas.books_schema import BookCreate, BookResponse
 
 # FastAPI 객체 생성
 app = FastAPI(
@@ -52,7 +52,7 @@ next_id = 1
 #-------------------------------------
 # 서버 상태 확인용 API
 #-------------------------------------
-@app.get("/health", summary="서버 상태 확인", tags=["시스템", "건강"])
+@app.get("/health", summary="서버 상태 확인", tags=["시스템"])
 def health_check() :
     """
     서버가 정상적으로 실행 중인지 확인하는 API입니다.
@@ -74,3 +74,26 @@ def health_check() :
     """
     # 디셔너리를 FastAPI가 자동으로 json으로 변환한다
     return {"status" : "ok", "version" : "1.0.0"}
+# 명령어 curl <- 응답을 가져와라? 서버 실행상태에서 실행
+# curl "http://127.0.0.1:8000/health"
+
+# 도서등록 (POST /books)
+@app.post("/books", response_model=BookResponse, status_code=201, tags=["도서"])
+def create_book(book:BookCreate) :
+    """
+    도서를 등록 합니다
+    status_code=201 : 생성 성공을 의미하는 HTTP 코드
+    """
+    global next_id
+    # Pydantic 객체를 딕셔너리로 변환후 펼쳐주는 함수
+    record = {"id" : next_id, **book.model_dump()}
+
+    books_db[next_id] = record  # 딕셔너리에 record 추가
+    next_id += 1
+    return record
+
+# 도서검색 (GET/book)
+
+# 도서수정
+
+# 도서삭제
