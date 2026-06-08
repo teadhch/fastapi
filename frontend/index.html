@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>도서 관리 - FastAPI 연동</title>
+  <style>
+    /* ===== 기본 스타일 ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 24px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* ===== 헤더 ===== */
+    header {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: #4a5568;
+    }
+
+    .server-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ccc;
+    }
+
+    .status-dot.online {
+      background: #48bb78;
+      box-shadow: 0 0 8px #48bb78;
+    }
+
+    .status-dot.offline {
+      background: #fc8181;
+    }
+
+    /* ===== 카드 공통 ===== */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: #4a5568;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 8px;
+    }
+
+    /* ===== 폼 ===== */
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #718096;
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    /* ===== 버튼 ===== */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover {
+      opacity: 0.85;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #edf2f7;
+      color: #4a5568;
+    }
+
+    .btn-danger {
+      background: #fc8181;
+      color: white;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    .btn-edit {
+      background: #63b3ed;
+      color: white;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      margin-right: 6px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    /* ===== 도서 목록 ===== */
+    .book-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .book-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      transition: box-shadow 0.2s;
+    }
+
+    .book-item:hover {
+      box-shadow: 0 2px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .book-info h3 {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .book-info p {
+      font-size: 0.85rem;
+      color: #718096;
+    }
+
+    .book-price {
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: #a0aec0;
+      padding: 32px;
+    }
+
+    /* ===== 알림 메시지 ===== */
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.success {
+      background: #c6f6d5;
+      color: #276749;
+    }
+
+    .message.error {
+      background: #fed7d7;
+      color: #9b2c2c;
+    }
+
+    /* ===== 수정 모달 ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal h2 {
+      margin-bottom: 16px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .filter-row .filter-input {
+      flex: 1;
+      min-width: 160px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 헤더: 제목 + 서버 연결 상태 -->
+    <header>
+      <h1>📚 도서 관리 시스템</h1>
+      <div class="server-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">서버 확인 중...</span>
+      </div>
+    </header>
+
+    <!-- 알림 메시지 영역 -->
+    <div class="message" id="messageBox"></div>
+
+    <!-- 도서 등록 폼 -->
+    <section class="card">
+      <h2>도서 등록</h2>
+      <form id="createBookForm">
+         <div class="form-row">
+          <div>
+            <label for="inputTitle">제목 *</label>
+            <input type="text" id="inputTitle" placeholder="예: 파이썬 완전 정복" required>
+          </div>
+          <div>
+            <label for="inputAuthor">저자 *</label>
+            <input type="text" id="inputAuthor" placeholder="예: 홍길동" required>
+          </div>
+          <div>
+            <label for="inputPrice">가격 *</label>
+            <input type="number" id="inputPrice" placeholder="예: 28000" min="1" required>
+          </div>
+          <div>
+            <label for="inputCategory">카테고리</label>
+            <input type="text" id="inputCategory" placeholder="예: 프로그래밍" value="기타">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">등록하기</button>
+      </form>
+    </section>
+
+    <!-- 도서 목록 + 카테고리 필터 -->
+    <section class="card">
+      <h2>도서 목록</h2>
+      <div class="filter-row">
+        <div class="filter-input">
+          <label for="filterCategory">카테고리 필터</label>
+          <input type="text" id="filterCategory" placeholder="예: 프로그래밍 (비우면 전체)">
+        </div>
+        <button type="button" class="btn btn-secondary" id="btnSearch">검색</button>
+        <button type="button" class="btn btn-secondary" id="btnRefresh">전체 보기</button>
+      </div>
+      <div class="book-list" id="bookList">
+        <p class="empty-message">도서를 불러오는 중...</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- 도서 수정 모달 -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h2>도서 수정</h2>
+      <form id="editBookForm">
+        <input type="hidden" id="editBookId">
+        <div class="form-row">
+          <div>
+            <label for="editTitle">제목</label>
+            <input type="text" id="editTitle">
+          </div>
+          <div>
+            <label for="editAuthor">저자</label>
+            <input type="text" id="editAuthor">
+          </div>
+          <div>
+            <label for="editPrice">가격</label>
+            <input type="number" id="editPrice" min="1">
+          </div>
+          <div>
+            <label for="editCategory">카테고리</label>
+            <input type="text" id="editCategory">
+          </div>
+        </div>
+        <div class="btn-group">
+          <button type="submit" class="btn btn-primary">저장</button>
+          <button type="button" class="btn btn-secondary" id="btnCloseModal">취소</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // API 기본 주소 설정
+    // - FastAPI 서버 주소 (기본: http://127.0.0.1:8000)
+    // - /frontend/ 로 열었을 때는 같은 서버를 자동 사용
+    // ============================================================
+    const API_BASE_URL = window.location.origin.includes("127.0.0.1") ||
+                         window.location.origin.includes("localhost")
+      ? window.location.origin
+      : "http://127.0.0.1:8000";
+
+    // ============================================================
+    // DOM 요소 (화면에서 자주 쓰는 요소를 변수에 저장)
+    // ============================================================
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const messageBox = document.getElementById("messageBox");
+    const bookList = document.getElementById("bookList");
+    const createBookForm = document.getElementById("createBookForm");
+    const editBookForm = document.getElementById("editBookForm");
+    const editModal = document.getElementById("editModal");
+    const filterCategory = document.getElementById("filterCategory");
+    const btnSearch = document.getElementById("btnSearch");
+    const btnRefresh = document.getElementById("btnRefresh");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+
+    // ============================================================
+    // 공통 함수: 알림 메시지 표시
+    // ============================================================
+    function showMessage(text, type) {
+      messageBox.textContent = text;
+      messageBox.className = "message show " + type;
+      setTimeout(function () {
+        messageBox.classList.remove("show");
+      }, 3000);
+    }
+
+    // ============================================================
+    // 공통 함수: API 호출 (fetch 사용)
+    // method: GET, POST, PUT, DELETE
+    // url: API 경로 (예: /books)
+    // body: POST/PUT일 때 보낼 JSON 데이터
+    // ============================================================
+    async function callApi(method, url, body) {
+      const options = {
+        method: method,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      };
+
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
+
+      const response = await fetch(API_BASE_URL + url, options);
+
+      // DELETE는 204 No Content → 본문 없음
+      if (response.status === 204) {
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // FastAPI 오류 응답: { detail: "에러 메시지" }
+        const errorMessage = data.detail || "요청 처리 중 오류가 발생했습니다.";
+        throw new Error(errorMessage);
+      }
+
+      return data;
+    }
+
+    // ============================================================
+    // 서버 상태 확인 (GET /health)
+    // ============================================================
+    async function checkServerHealth() {
+      try {
+        const result = await callApi("GET", "/health");
+        statusDot.className = "status-dot online";
+        statusText.textContent = "서버 연결됨 (v" + result.version + ")";
+      } catch (error) {
+        statusDot.className = "status-dot offline";
+        statusText.textContent = "서버 연결 실패 - uvicorn 실행 확인";
+      }
+    }
+
+    // ============================================================
+    // 도서 목록 조회 (GET /books 또는 GET /books?category=...)
+    // ============================================================
+    async function loadBookList(category) {
+      try {
+        let url = "/books";
+        if (category && category.trim() !== "") {
+          url += "?category=" + encodeURIComponent(category.trim());
+        }
+
+        const books = await callApi("GET", url);
+        renderBookList(books);
+      } catch (error) {
+        bookList.innerHTML = '<p class="empty-message">목록을 불러올 수 없습니다.</p>';
+        showMessage(error.message, "error");
+      }
+    }
+
+    // ============================================================
+    // 도서 목록을 화면에 그리기
+    // ============================================================
+    function renderBookList(books) {
+      if (books.length === 0) {
+        bookList.innerHTML = '<p class="empty-message">등록된 도서가 없습니다.</p>';
+        return;
+      }
+
+      bookList.innerHTML = books.map(function (book) {
+        const priceFormatted = book.price.toLocaleString("ko-KR") + "원";
+        return (
+          '<div class="book-item" data-id="' + book.id + '">' +
+            '<div class="book-info">' +
+              '<h3>' + escapeHtml(book.title) + '</h3>' +
+              '<p>저자: ' + escapeHtml(book.author) +
+              ' | 카테고리: ' + escapeHtml(book.category) +
+              ' | ID: ' + book.id + '</p>' +
+              '<p class="book-price">' + priceFormatted + '</p>' +
+            '</div>' +
+            '<div>' +
+              '<button class="btn btn-edit" onclick="openEditModal(' + book.id + ')">수정</button>' +
+              '<button class="btn btn-danger" onclick="deleteBook(' + book.id + ')">삭제</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }).join("");
+    }
+
+    // XSS 방지: HTML 특수문자 이스케이프
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ============================================================
+    // 도서 등록 (POST /books)
+    // ============================================================
+    createBookForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const newBook = {
+        title: document.getElementById("inputTitle").value.trim(),
+        author: document.getElementById("inputAuthor").value.trim(),
+        price: parseInt(document.getElementById("inputPrice").value, 10),
+        category: document.getElementById("inputCategory").value.trim() || "기타"
+      };
+
+      try {
+        await callApi("POST", "/books", newBook);
+        showMessage("도서가 등록되었습니다.", "success");
+        createBookForm.reset();
+        document.getElementById("inputCategory").value = "기타";
+        loadBookList(filterCategory.value);
+      } catch (error) {
+        showMessage(error.message, "error");
+      }
+    });
+
+    // ============================================================
+    // 도서 수정 모달 열기 (GET /books/{id} 로 현재 정보 조회)
+    // ============================================================
+    async function openEditModal(bookId) {
+      try {
+        const book = await callApi("GET", "/books/" + bookId);
+        document.getElementById("editBookId").value = book.id;
+        document.getElementById("editTitle").value = book.title;
+        document.getElementById("editAuthor").value = book.author;
+        document.getElementById("editPrice").value = book.price;
+        document.getElementById("editCategory").value = book.category;
+        editModal.classList.add("show");
+      } catch (error) {
+        showMessage(error.message, "error");
+      }
+    }
+
+    // ============================================================
+    // 도서 수정 저장 (PUT /books/{id})
+    // ============================================================
+    editBookForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const bookId = document.getElementById("editBookId").value;
+      const updateData = {
+        title: document.getElementById("editTitle").value.trim(),
+        author: document.getElementById("editAuthor").value.trim(),
+        price: parseInt(document.getElementById("editPrice").value, 10),
+        category: document.getElementById("editCategory").value.trim()
+      };
+
+      try {
+        await callApi("PUT", "/books/" + bookId, updateData);
+        showMessage("도서 정보가 수정되었습니다.", "success");
+        editModal.classList.remove("show");
+        loadBookList(filterCategory.value);
+      } catch (error) {
+        showMessage(error.message, "error");
+      }
+    });
+
+    // ============================================================
+    // 도서 삭제 (DELETE /books/{id})
+    // ============================================================
+    async function deleteBook(bookId) {
+      const confirmDelete = confirm("정말 " + bookId + "번 도서를 삭제하시겠습니까?");
+      if (!confirmDelete) return;
+
+      try {
+        await callApi("DELETE", "/books/" + bookId);
+        showMessage("도서가 삭제되었습니다.", "success");
+        loadBookList(filterCategory.value);
+      } catch (error) {
+        showMessage(error.message, "error");
+      }
+    }
+
+    // ============================================================
+    // 이벤트: 카테고리 검색, 전체 보기, 모달 닫기
+    // ============================================================
+    btnSearch.addEventListener("click", function () {
+      loadBookList(filterCategory.value);
+    });
+
+    btnRefresh.addEventListener("click", function () {
+      filterCategory.value = "";
+      loadBookList();
+    });
+
+    btnCloseModal.addEventListener("click", function () {
+      editModal.classList.remove("show");
+    });
+
+    editModal.addEventListener("click", function (event) {
+      if (event.target === editModal) {
+        editModal.classList.remove("show");
+      }
+    });
+
+    // ============================================================
+    // 페이지 로드 시 초기 실행
+    // ============================================================
+    checkServerHealth();
+    loadBookList();
+  </script>
+</body>
+</html>
