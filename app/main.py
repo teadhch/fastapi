@@ -33,7 +33,7 @@ from pydantic import BaseModel, Field   # 요청 데이터와 응답 데이터�
 # - 값이 있을 수도 있고 없을 수도 있음을 의미합니다.
 # - 예: Optional[str]은 문자열이거나 None일 수 있습니다.
 from typing import List, Optional   # 데이터를 여러개 담을수 있는 컬렉션 객체
-from schemas.BookCreate import BookCreate
+from schemas.books_schema import BookCreate
 
 # FastAPI 객체 생성
 app = FastAPI(
