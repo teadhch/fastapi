@@ -9,7 +9,7 @@ import json
 from app.schemas.llm import *
 
 # 호출할 서비스단
-from app.services.llm_service import summarize
+from app.services.llm_service import summarize, analyze_sentiment
 
 # prefix : 모든 경로 앞에 /llm이 붙는다
 # 예 : /summarize => /llm/summarize
@@ -24,4 +24,11 @@ async def summarize_text(request:SummarizeRequest) :
     return SummarizeResponse(
         original_length=len(request.text),
         summary=result
+    )
+
+@llm_router.post("/sentiment", response_model=SentimentReviewResponse, status_code=201, summary="리뷰 감정 분석")
+async def sentiment_endpoint(request:SentimentReviewRequest) :
+    result = await analyze_sentiment(request.text)
+    return SentimentReviewResponse(
+        text=request.text, **result
     )

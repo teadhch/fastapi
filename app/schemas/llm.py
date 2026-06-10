@@ -27,7 +27,7 @@ class SummarizeResponse(BaseModel) :
     summary : str # LLM이 생성한 요약문
 
 # LLM에게 리뷰를 보내고 긍정/부정인지 평가를 원한다면...
-class SentimentRequest(BaseModel):
+class SentimentReviewRequest(BaseModel):
     text: str = Field(..., min_length=1, description="감정 분석할 텍스트")
 
     model_config = {
@@ -37,7 +37,7 @@ class SentimentRequest(BaseModel):
     }
 
 # LLM이 응답한 리뷰 감정 분석 결과용
-class SentimentResponse(BaseModel):
+class SentimentReviewResponse(BaseModel):
     text:      str    # 입력 텍스트
     sentiment: str    # "긍정" | "부정" | "중립"
     score:     float  # 0.0 ~ 1.0

@@ -97,6 +97,6 @@ async def analyze_sentiment(text:str) -> dict :
     raw = await _call_with_timeout(_call())
 
     try :
-        return json.load(raw)
+        return json.loads(raw)
     except json.JSONDecodeError :
         raise HTTPException(status_code=502, detail="JSON파싱실패")
