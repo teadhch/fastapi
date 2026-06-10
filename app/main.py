@@ -40,12 +40,20 @@ from typing import List, Optional   # 데이터를 여러개 담을수 있는 �
 
 from app.schemas.books_schema import BookCreate, BookResponse, BookUpdate
 
+from app.routers.llm_router import llm_router
+
+from dotenv import load_dotenv
+load_dotenv()
+
 # FastAPI 객체 생성
 app = FastAPI(
     title="도서관리 API",
     description="FastAPI 기초 실습 - 도서관리 CRUD를 할 수 있는 엔드포인트",
     version="1.0.0"
-)
+)   #   APIRouter를 함께 가지고 있다.
+
+# 라우터 추가 등록 
+app.include_router(llm_router)
 
 # CORS 설정: 브라우저(프론트엔드)에서 API를 호출할 수 있게 허용
 app.add_middleware(

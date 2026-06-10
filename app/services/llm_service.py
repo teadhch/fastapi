@@ -45,7 +45,7 @@ async def summarize(text:str, max_length:int, language:str) -> str:
     텍스트를 GPT-4o로 요약합니다.
     요약 결과 문자열을 반환합니다.
     """
-    client = get_llm_client
+    client = get_llm_client()
     lang_str = "한국어" if language =="ko" else "English"
 
     async def _call() :
