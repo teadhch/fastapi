@@ -88,7 +88,7 @@ from fastapi.staticfiles import StaticFiles
 
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from schemas.books_schema import BookCreate, BookResponse, BookUpdate
+from app.schemas.books_schema import BookCreate, BookResponse, BookUpdate
 
 app = FastAPI(
     title="도서관리",
