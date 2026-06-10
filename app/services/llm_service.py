@@ -67,3 +67,36 @@ async def summarize(text:str, max_length:int, language:str) -> str:
         return response.choices[0].message.content
     
     return await _call_with_timeout(coro=_call())
+
+async def analyze_sentiment(text:str) -> dict :
+    """
+    텍스트의 감정을 분석합니다.
+    {"sentiment": "긍정|부정|중립", "score": 0.0~1.0, "reason": "..."} 반환
+    """
+    client = get_llm_client()
+
+    async def _call():
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        '감정을 분석해서 아래 JSON 형식으로만 반환하세요.\n'
+                        '{"sentiment":"긍정|부정|중립","score":0.0~1.0,"reason":"판단근거"}'
+                    )
+                },
+                {"role": "user", "content": text}
+            ],
+            response_format={"type": "json_object"},   # JSON 응답 강제
+            max_tokens=150,
+            temperature=0,
+        )
+        return response.choices[0].message.content
+
+    raw = await _call_with_timeout(_call())
+
+    try :
+        return json.load(raw)
+    except json.JSONDecodeError :
+        raise HTTPException(status_code=502, detail="JSON파싱실패")
