@@ -41,6 +41,7 @@ from typing import List, Optional   # 데이터를 여러개 담을수 있는 �
 from app.schemas.books_schema import BookCreate, BookResponse, BookUpdate
 
 from app.routers.llm_router import llm_router
+from app.routers.image_llm_router import image_llm_router
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -54,6 +55,7 @@ app = FastAPI(
 
 # 라우터 추가 등록 
 app.include_router(llm_router)
+app.include_router(image_llm_router)
 
 # CORS 설정: 브라우저(프론트엔드)에서 API를 호출할 수 있게 허용
 app.add_middleware(
