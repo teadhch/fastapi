@@ -17,4 +17,22 @@ class TextSummaryResponse(BaseModel) :
     filename: str
     original_length: int
     summary: str
-    
+
+class ImageAnalysisForm:
+    """
+    이미지 분석 엔드포인트의 Form 파라미터를 하나로 묶은 클래스.
+    Depends()로 라우터에 주입됩니다.
+    """
+    def __init__(
+        self,
+        prompt: str = Form(
+            "이미지를 자세히 설명하고, 보이는 객체와 전반적인 분위기를 알려주세요.",
+            description="분석 지시"
+        ),
+        language: str = Form(
+            "ko",
+            description="출력 언어 (ko/en)"
+        ),
+    ):
+        self.prompt   = prompt
+        self.language = language
