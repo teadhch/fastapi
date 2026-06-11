@@ -75,3 +75,35 @@ async def analyze_image_with_llm(
         return json.loads(raw)
     except json.JSONDecodeError as e:
         raise HTTPException(502, detail="JSON 파싱 실패")
+
+async def summarize_text_with_llm(
+    text:       str,
+    max_length: int,
+    language:   str,
+) -> str:
+    """텍스트를 GPT-4o로 요약합니다. 요약 문자열을 반환합니다."""
+    client = get_llm_client()
+    lang   = LANG_MAP.get(language, "한국어")
+
+    async def _call():
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        f"텍스트를 {max_length}자 이내로 핵심만 요약하세요. "
+                        f"반드시 {lang}로 출력하세요."
+                    )
+                },
+                {"role": "user", "content": text},
+            ],
+            max_tokens=400,
+            temperature=0.3,
+        )
+        return response.choices[0].message.content
+
+    try:
+        return await _call_with_timeout(_call(), timeout=30.0)
+    except asyncio.TimeoutError:
+        raise HTTPException(503, detail="LLM 응답 시간 초과")
