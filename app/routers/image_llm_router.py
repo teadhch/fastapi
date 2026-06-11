@@ -7,9 +7,8 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 import json
 
 from app.schemas.image_llm import *
-from app.services.file_analyze_service import validate_image
+from app.services.file_analyze_service import validate_image, analyze_image_with_llm
 image_llm_router = APIRouter(prefix="/imagellm", tags=["LLM"])
-
 # Form 파라미터 클래스
 # 이미지 분석의 엔드포인트의 Form 파라미터를 하나로 묶은 클래스
 # Depends()로 라우터에 주입한다
@@ -41,4 +40,12 @@ async def analyze_image(
     contents = await file.read()    # 파일 읽기
     validate_image(file.content_type, len(contents)) # 검증
 
-    
+    result = await analyze_image_with_llm(contents, form.prompt, form.language)
+
+    return ImageAnalysisResponse(
+        filename=file.filename,
+        size_bytes= len(contents),
+        description=result.get("description", ""),    # 이미지 전체 설명
+        objects=result.get("objects", []),       # 탐지된 객체 목록
+        mood=result.get("mood", "")           # 전반적인 분위기
+    )
