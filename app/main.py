@@ -41,7 +41,7 @@ from typing import List, Optional   # 데이터를 여러개 담을수 있는 �
 from app.schemas.books_schema import BookCreate, BookResponse, BookUpdate
 
 from app.routers.llm_router import llm_router
-from app.routers.image_llm_router import image_llm_router
+from app.routers.file_llm_router import image_llm_router
 
 from dotenv import load_dotenv
 load_dotenv()

@@ -6,7 +6,7 @@ from fastapi import APIRouter   # router를 분리할 때 필요
 import json
 
 # 요청 응답시 처리되는 데이터 검증용
-from app.schemas.llm import *
+from app.schemas.file_llm import *
 
 # 호출할 서비스단
 from app.services.llm_service import summarize, analyze_sentiment
