@@ -3,6 +3,7 @@
 #       (실제 LLM API의 호출 코드는 이 파일에 없습니다)
 
 from pydantic import BaseModel, Field
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 
 # LLM에게 이미지파일을 주고, 응답을 받아낼 용도
 class ImageAnalysisResponse(BaseModel) :

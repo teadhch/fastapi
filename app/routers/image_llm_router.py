@@ -7,7 +7,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 import json
 
 from app.schemas.image_llm import *
-
+from app.services.file_analyze_service import validate_image
 image_llm_router = APIRouter(prefix="/imagellm", tags=["LLM"])
 
 # Form 파라미터 클래스
@@ -39,4 +39,6 @@ async def analyze_image(
     - `language`: 출력 언어 ko/en
     """
     contents = await file.read()    # 파일 읽기
-    validate_image(file.content_type, len(contents))
+    validate_image(file.content_type, len(contents)) # 검증
+
+    
