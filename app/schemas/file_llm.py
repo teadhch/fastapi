@@ -3,6 +3,8 @@
 #      (실제 llm API의 호출 코드는 이 파일에 없습니다)
 
 from pydantic import BaseModel, Field
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+import json
 
 # LLM에게 텍스트를 주고, 텍스트를 요약 요청할때 사용
 class SummarizeRequest(BaseModel) :
@@ -42,3 +44,19 @@ class SentimentReviewResponse(BaseModel):
     sentiment: str    # "긍정" | "부정" | "중립"
     score:     float  # 0.0 ~ 1.0
     reason:    str    # 판단 근거
+
+class TextSummaryForm:
+    """텍스트 파일 요약 엔드포인트의 Form 파라미터 클래스"""
+    def __init__(
+        self,
+        max_length: int = Form(
+            200,
+            description="요약 최대 길이(글자)"
+        ),
+        language: str = Form(
+            "ko",
+            description="출력 언어 (ko/en)"
+        ),
+    ):
+        self.max_length = max_length
+        self.language   = language

@@ -6,8 +6,9 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 import json
 
+from app.schemas.file_llm import *
 from app.schemas.image_llm import *
-from app.services.file_analyze_service import validate_image, analyze_image_with_llm
+from app.services.file_analyze_service import validate_image, analyze_image_with_llm, validate_text_file, summarize_text_with_llm
 image_llm_router = APIRouter(prefix="/imagellm", tags=["LLM"])
 # Form 파라미터 클래스
 # 이미지 분석의 엔드포인트의 Form 파라미터를 하나로 묶은 클래스
@@ -49,3 +50,36 @@ async def analyze_image(
         objects=result.get("objects", []),       # 탐지된 객체 목록
         mood=result.get("mood", "")           # 전반적인 분위기
     )
+
+@image_llm_router.post(
+    "/text",
+    response_model=TextSummaryResponse,
+    status_code=201,
+    summary="텍스트 파일 요약"
+)
+async def analyze_text_file(
+    file: UploadFile      = File(..., description="요약할 텍스트 파일 (.txt)"),
+    form: TextSummaryForm = Depends(),   # Form 파라미터 묶음 주입
+):
+    """
+    텍스트 파일을 업로드하면 GPT-4o가 요약합니다.
+
+    Form 파라미터:
+    - `max_length`: 요약 최대 길이 (기본값 200)
+    - `language`  : 출력 언어 ko/en
+    """
+    contents = await file.read()
+    text     = contents.decode("utf-8", errors="ignore")
+
+    validate_text_file(file.content_type, len(contents), text)   # 검증
+
+    summary = await summarize_text_with_llm(                     # LLM
+        text, form.max_length, form.language
+    )
+
+    return TextSummaryResponse(
+        filename=file.filename or "unknown.txt",
+        original_length=len(text),
+        summary=summary,
+    )
+

@@ -107,3 +107,12 @@ async def summarize_text_with_llm(
         return await _call_with_timeout(_call(), timeout=30.0)
     except asyncio.TimeoutError:
         raise HTTPException(503, detail="LLM 응답 시간 초과")
+    
+def validate_text_file(content_type: str, size: int, text: str) -> None:
+    """텍스트 파일 형식·크기·내용을 검증합니다."""
+    if content_type not in ALLOWED_TEXT_TYPES:
+        raise HTTPException(status_code=415, detail="txt 파일만 허용합니다")
+    if size > MAX_TEXT_SIZE:
+        raise HTTPException(status_code=413, detail="텍스트 파일 최대 1MB")
+    if not text.strip():
+        raise HTTPException(status_code=422, detail="빈 파일입니다")
